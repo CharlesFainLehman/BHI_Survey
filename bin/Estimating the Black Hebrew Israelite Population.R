@@ -44,17 +44,16 @@ bhi %>%
   mutate(p = n/sum(n),
          se = ifelse(Black == "Black", sqrt((p * (1-p))/black_n), sqrt((p * (1-p))/non_black_n)),
          value = factor(value,
-                           levels = c("Strongly agree",
-                                      "Somewhat agree",
-                                      "Neither agree nor disagree",
-                                      "Somewhat disagree",
-                                      "Strongly disagree"))) %>% 
+                        levels = c("Strongly agree",
+                                   "Somewhat agree",
+                                   "Neither agree nor disagree",
+                                   "Somewhat disagree",
+                                   "Strongly disagree"))) %>% 
   ggplot(aes(x=value, y=p, color = Black)) + 
   geom_point(position = position_dodge(width = 0.5), aes(shape = Biblit, group = Black)) + 
   geom_errorbar(aes(ymin = p - 1.96 * se, ymax = p + 1.96 * se), width = 0.1, position = position_dodge(width = 0.5)) + 
   facet_wrap(~name) + 
   scale_y_continuous(labels = scales::percent) + 
-
   theme(legend.title = element_blank(),
         axis.title.x = element_blank(),
         axis.text.x = element_text(angle = 45, hjust = 1),
