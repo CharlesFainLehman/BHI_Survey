@@ -4,9 +4,11 @@ library(spatstat.geom)
 
 bhi <- read.csv("dat/BHI_Responses_With_Weights_and_BHI_categories.csv")
 
+#Hardcoding Ns for creating CIs
 black_n = 1050
 non_black_n = 529
 
+#Figure 7
 bhi %>%
   select(wt, Black, IDed.BHI, BHI.Believer, starts_with("QHit")) %>%
   pivot_longer(cols = starts_with("QHit"), names_to = "Question", values_to = "Response") %>%
@@ -23,16 +25,17 @@ bhi %>%
   mutate(p = wtd.n/sum(wtd.n),
          se = ifelse(Black == "Black", 1.96 * sqrt((p * (1-p))/black_n), 1.96 * sqrt((p * (1-p))/non_black_n))) %>%
   filter(Response == "Support") %>%
-  ggplot(aes(x=Question, y = p, color = ID_Response)) + 
-  geom_point(position = position_dodge(width = 0.5)) + 
-  geom_errorbar(aes(ymin = p - se, ymax = p + se), width = 0.1, position = position_dodge(width = 0.5)) +
+  ggplot(aes(x=Question, y = p)) + 
+  geom_col(position = position_dodge(width = 0.5), width = 0.5, aes(fill = ID_Response)) + 
+  geom_errorbar(aes(ymin = p - se, ymax = p + se, group = ID_Response), width = 0.25, position = position_dodge(width = 0.5)) +
   scale_y_continuous(labels = scales::percent) +
   facet_grid(cols = vars(Black), rows = vars(Identification)) +
   theme(panel.border = element_rect(color = '#aeb0b7', fill = NA)) + 
-  labs(y = "Share Somewhat/Strongly Support", color = "Identified in Group")
+  labs(y = "Share Somewhat/Strongly Support", fill = "Identified in Group")
 
-ggsave("img/plot6.png", width = 8, height = 5)
+ggsave("img/plot7.png", width = 8, height = 5)
 
+#Effect of BHI on total number of Yeses in the interpersonal violence Qs
 bhi %>%
   filter(Black == "Black") %>%
   mutate(across(starts_with("QHit"), ~ ifelse(.x %in% c("Strongly support", "Somewhat support"), 1, 0)),
@@ -40,7 +43,7 @@ bhi %>%
   lm(HitTotal ~ BHI.Believer, data = ., weights = wt) %>%
   summary()
   
-
+#Figure 8
 bhi %>%
   select(wt, Black, IDed.BHI, BHI.Believer, starts_with("QVio")) %>%
   pivot_longer(cols = starts_with("QVio"), names_to = "Question", values_to = "Response") %>%
@@ -56,17 +59,12 @@ bhi %>%
   mutate(p = wtd.n/sum(wtd.n),
          se = ifelse(Black == "Black", 1.96 * sqrt((p * (1-p))/black_n), 1.96 * sqrt((p * (1-p))/non_black_n))) %>%
   filter(Response == "Support") %>%
-  ggplot(aes(x=Question, y = p, color = ID_Response)) + 
-  geom_point(position = position_dodge(width = 0.5)) + 
-  geom_errorbar(aes(ymin = p - se, ymax = p + se), width = 0.1, position = position_dodge(width = 0.5)) +
+  ggplot(aes(x=Question, y = p)) + 
+  geom_col(position = position_dodge(width = 0.5), width = 0.5, aes(fill = ID_Response)) + 
+  geom_errorbar(aes(ymin = p - se, ymax = p + se, group = ID_Response), width = 0.25, position = position_dodge(width = 0.5)) +
   scale_y_continuous(labels = scales::percent) +
   facet_grid(cols = vars(Black), rows = vars(Identification)) +
   theme(panel.border = element_rect(color = '#aeb0b7', fill = NA)) + 
-  labs(y = "Share Somewhat/Strongly Support", color = "Identified in Group") 
+  labs(y = "Share Somewhat/Strongly Support", fill = "Identified in Group") 
 
-ggsave("img/plot7.png", width = 8, height = 5)
-
-bhi %>%
-  filter(Black == "Black") %>%
-  lm(IDed.BHI ~ QDemo9, data = ., weights = wt) %>%
-  summary()
+ggsave("img/plot8.png", width = 8, height = 5)

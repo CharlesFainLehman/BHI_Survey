@@ -1,4 +1,4 @@
-#I'm following this guide
+#See this guide for details
 #https://sdaza.com/blog/2012/raking/
 
 library(anesrake)
@@ -6,9 +6,10 @@ library(tidyverse)
 library(readxl)
 
 bhi <- read_excel("dat/Black+Hebrew+Israelism+Survey_September+11,+2023_15.46.xlsx") %>%
-  #drop the top row, which is just the questions
+  #drop the top row, which contains the question text
   slice_tail(n = nrow(.) - 1) %>%
-  mutate(id = 1:n())
+  #create a unique id for each row
+  mutate(id = 1:n()) 
 
 #construct weights for black subsample
 
@@ -25,7 +26,7 @@ bhi_black_subsample <- filter(bhi, QScreen1 == "Black or African American") %>%
          Age = as.numeric(Age),
          Age_Category = cut(Age, breaks = c(17, 27, 37, 47, 57, 67, 77, 87, 97, 107)))
 
-#targets
+#black sample targets
 b_targets = list(
   Sex = c(.471, .529),
   Hispanic = c(.018, .982),
