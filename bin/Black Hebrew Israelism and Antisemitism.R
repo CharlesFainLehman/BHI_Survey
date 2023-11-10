@@ -93,12 +93,10 @@ bhi %>%
             n = n(),
             .groups = 'drop') %>%
   drop_na() %>%
-  group_by(Black, Measure, Question) %>%
-  mutate(n_respondents = sum(n)) %>%
-  ungroup() %>%
   group_by(Black, Measure, Measure_Response, Question) %>%
   mutate(p = wtd.n/sum(wtd.n),
-         se = 1.96 * sqrt((p * (1-p))/n_respondents)) %>%
+         n = sum(n),
+         se = 1.96 * sqrt((p * (1-p))/n)) %>%
   filter(Response == "Agree") %>%
   #Relabeling
   mutate(Measure = ifelse(Measure == "BHI.Believer", "BHI Believer", "Self-IDed BHI"),
@@ -140,27 +138,24 @@ stargazer(lm(Affirmative_Answers ~ BHI.Believer, data = filter(bhi_count_data, B
           lm(Affirmative_Answers ~ IDed.BHI, data = filter(bhi_count_data, Black == "Nonblack"), weights = wt),
              type = 'text')
 
-#Just hardcoding this for simplicity
-#For calculating the CIs
-black_n = 1050
-non_black_n = 529
-
 #Figure 6
 bhi %>%
   select(Black, BHI.Believer, IDed.BHI, QBHI4, wt) %>%
   mutate(Jews_Not_Descended = QBHI4 %in% c("Somewhat disagree", "Strongly disagree")) %>%
   pivot_longer(cols = c(BHI.Believer, IDed.BHI), names_to = "Measure", values_to = "Measure_Response") %>%
   group_by(Black, Measure, Measure_Response, Jews_Not_Descended) %>%
-  summarise(n = sum(wt)) %>%
-  mutate(p = n/sum(n),
-         se = ifelse(Black == "Black", 1.96 * sqrt((p * (1-p))/black_n), 1.96 * sqrt((p * (1-p))/non_black_n))) %>%
+  summarise(wtd.n = sum(wt),
+            n = n()) %>%
+  mutate(p = wtd.n/sum(wtd.n),
+         n = sum(n),
+         se = sqrt((p * (1-p))/n)) %>%
   filter(Jews_Not_Descended == T) %>%
   #Relabeling
   mutate(Measure = ifelse(Measure == "BHI.Believer", "BHI Believer", "Self-IDed BHI"),
          Measure_Response = ifelse(Measure_Response == T, "Yes", "No")) %>%
   ggplot(aes(x=Measure_Response, y=p)) + 
   geom_col(position = position_dodge(width = 0.5), width = 0.5, aes(fill = Black)) + 
-  geom_errorbar(aes(ymin = p - se, ymax = p + se, group = Black), position = position_dodge(width = 0.5), width = 0.25) +
+  geom_errorbar(aes(ymin = p - 1.96 * se, ymax = p + 1.96 * se, group = Black), position = position_dodge(width = 0.5), width = 0.25) +
   facet_wrap(~Measure) +
   scale_y_continuous(labels = scales::percent) + 
   theme(panel.border = element_rect(color = '#aeb0b7', fill = NA)) + 

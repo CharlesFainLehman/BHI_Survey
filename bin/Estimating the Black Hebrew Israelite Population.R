@@ -4,10 +4,6 @@ bhi <- read.csv('dat/BHI_Responses_With_Weights.csv') %>%
   #Simplifying the black category
   mutate(Black = ifelse(QScreen1 == "Black or African American", "Black", "Nonblack"))
 
-#Need to know Ns for calculating CIs
-black_n <- nrow(filter(bhi, Black == "Black"))
-non_black_n <- nrow(filter(bhi, Black == "Nonblack"))
-
 #Figure 1
 bhi %>%
   select(Black, QBHI2, QBHI3, QBHI4, wt) %>%
@@ -16,9 +12,11 @@ bhi %>%
                           name == "QBHI3" ~ "Other Groups",
                           name == "QBHI4" ~ "Jews")) %>%
   group_by(Black, name, value) %>%
-  summarise(n = sum(wt)) %>%
-  mutate(p = n/sum(n),
-         se = ifelse(Black == "Black", sqrt((p * (1-p))/black_n), sqrt((p * (1-p))/non_black_n)),
+  summarise(wtd.n = sum(wt),
+            n = n()) %>%
+  mutate(p = wtd.n/sum(wtd.n),
+         n = sum(n),
+         se = sqrt((p * (1-p))/n),
          value = factor(value, levels = c("Strongly agree", "Somewhat agree", "Neither agree nor disagree", "Somewhat disagree", "Strongly disagree"))) %>%
   ggplot(aes(x=value, y=p)) + 
   geom_col(position = position_dodge(width = 0.5), width = 0.5, aes(fill = Black)) + 
@@ -41,11 +39,11 @@ bhi %>%
                           name == "QBHI4" ~ "Jews"),
          Biblit = ifelse(!QBHI1 %in% c("Not familiar at all", "Only slightly familiar"), "Familiar", "Not familiar")) %>%
   group_by(Black, name, Biblit, value) %>%
-  summarise(n = sum(wt)) %>%
-  ungroup() %>%
-  group_by(Black, name, Biblit) %>%
-  mutate(p = n/sum(n),
-         se = ifelse(Black == "Black", sqrt((p * (1-p))/black_n), sqrt((p * (1-p))/non_black_n)),
+  summarise(wtd.n = sum(wt),
+            n = n()) %>%
+  mutate(p = wtd.n/sum(wtd.n),
+         n = sum(n),
+         se = sqrt((p * (1-p))/n),
          value = factor(value,
                            levels = c("Strongly agree",
                                       "Somewhat agree",
@@ -69,9 +67,11 @@ ggsave("img/plot2.png", width = 8, height = 5)
 bhi %>%
   mutate(QDemo1 = ifelse(QDemo1 == "Yes", "BHI IDed", "Not BHI IDed")) %>%
   group_by(Black, QDemo1, QBHI2) %>%
-  summarise(n = sum(wt)) %>%
-  mutate(p = n/sum(n),
-         se = ifelse(Black == "Black", sqrt((p * (1-p))/black_n), sqrt((p * (1-p))/non_black_n)),
+  summarise(wtd.n = sum(wt),
+            n = n()) %>%
+  mutate(p = wtd.n/sum(wtd.n),
+         n = sum(n),
+         se = sqrt((p * (1-p))/n),
          QBHI2 = factor(QBHI2,
                         levels = c("Strongly agree",
                                    "Somewhat agree",
@@ -98,9 +98,11 @@ bhi %>%
   select(Black, wt, IDed.BHI, BHI.Believer) %>%
   pivot_longer(cols = c(IDed.BHI, BHI.Believer)) %>%
   group_by(Black, name, value) %>%
-  summarise(n = sum(wt)) %>%
-  mutate(p = n/sum(n),
-         se = ifelse(Black == "Black", 1.96 * sqrt((p * (1-p))/black_n), 1.96 * sqrt((p * (1-p))/non_black_n)),
+  summarise(wtd.n = sum(wt),
+            n = n()) %>%
+  mutate(p = wtd.n/sum(wtd.n),
+         n = sum(n),
+         se = 1.96 * sqrt((p * (1-p))/n),
          min = p - se,
          max = p + se) %>%
   filter(value == T) 
