@@ -4,10 +4,6 @@ library(spatstat.geom)
 
 bhi <- read.csv("dat/BHI_Responses_With_Weights_and_BHI_categories.csv")
 
-#Hardcoding Ns for creating CIs
-black_n = 1050
-non_black_n = 529
-
 #Figure 7
 bhi %>%
   select(wt, Black, IDed.BHI, BHI.Believer, starts_with("QHit")) %>%
@@ -21,13 +17,14 @@ bhi %>%
   mutate(ID_Response = ifelse(ID_Response == T, "Yes", "No"),
          Identification = ifelse(Identification == "IDed.BHI", "Self-IDed BHI", "BHI Believer")) %>%
   group_by(Black, Identification, ID_Response, Question, Response) %>%
-  summarise(wtd.n = sum(wt)) %>%
+  summarise(wtd.n = sum(wt), 
+            n = n()) %>%
   mutate(p = wtd.n/sum(wtd.n),
-         se = ifelse(Black == "Black", 1.96 * sqrt((p * (1-p))/black_n), 1.96 * sqrt((p * (1-p))/non_black_n))) %>%
+         se = sqrt((p * (1-p))/n)) %>%
   filter(Response == "Support") %>%
   ggplot(aes(x=Question, y = p)) + 
   geom_col(position = position_dodge(width = 0.5), width = 0.5, aes(fill = ID_Response)) + 
-  geom_errorbar(aes(ymin = p - se, ymax = p + se, group = ID_Response), width = 0.25, position = position_dodge(width = 0.5)) +
+  geom_errorbar(aes(ymin = p - 1.96 * se, ymax = p + 1.96 * se, group = ID_Response), width = 0.25, position = position_dodge(width = 0.5)) +
   scale_y_continuous(labels = scales::percent) +
   facet_grid(cols = vars(Black), rows = vars(Identification)) +
   theme(panel.border = element_rect(color = '#aeb0b7', fill = NA)) + 
@@ -55,13 +52,14 @@ bhi %>%
   mutate(ID_Response = ifelse(ID_Response == T, "Yes", "No"),
          Identification = ifelse(Identification == "IDed.BHI", "Self-IDed BHI", "BHI Believer")) %>%
   group_by(Black, Identification, ID_Response, Question, Response) %>%
-  summarise(wtd.n = sum(wt)) %>%
+  summarise(wtd.n = sum(wt),
+            n = n()) %>%
   mutate(p = wtd.n/sum(wtd.n),
-         se = ifelse(Black == "Black", 1.96 * sqrt((p * (1-p))/black_n), 1.96 * sqrt((p * (1-p))/non_black_n))) %>%
+         se = sqrt((p * (1-p))/n)) %>%
   filter(Response == "Support") %>%
   ggplot(aes(x=Question, y = p)) + 
   geom_col(position = position_dodge(width = 0.5), width = 0.5, aes(fill = ID_Response)) + 
-  geom_errorbar(aes(ymin = p - se, ymax = p + se, group = ID_Response), width = 0.25, position = position_dodge(width = 0.5)) +
+  geom_errorbar(aes(ymin = p - 1.96  * se, ymax = p + 1.96 * se, group = ID_Response), width = 0.25, position = position_dodge(width = 0.5)) +
   scale_y_continuous(labels = scales::percent) +
   facet_grid(cols = vars(Black), rows = vars(Identification)) +
   theme(panel.border = element_rect(color = '#aeb0b7', fill = NA)) + 
